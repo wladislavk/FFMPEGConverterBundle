@@ -1,0 +1,10 @@
+services:
+    vkr_ffmpeg_converter.converter:
+        class: VKR\FFMPEGConverterBundle\Services\Converter
+        arguments:
+            - "@vkr_custom_logger.logger"
+            - "@vkr_ffmpeg_converter.shell_decorator"
+            - "%ffmpeg_path%"
+            - "%vkr_ffmpeg_converter.params%"
+    vkr_ffmpeg_converter.shell_decorator:
+        class: VKR\FFMPEGConverterBundle\Decorators\ShellDecorator
