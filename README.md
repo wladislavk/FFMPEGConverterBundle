@@ -80,7 +80,7 @@ parameters:
             output: '-c:v libx264 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2"'
 ```
 
-Run ```phpunit vendor/vkr/ffmpeg-converter-bundle/Tests``` and see if all tests are green.
+Run ```phpunit -c app/ vendor/vkr/ffmpeg-converter-bundle/Tests``` and see if all tests are green.
 
 Re-run the tests after deployment to a live server.
 
