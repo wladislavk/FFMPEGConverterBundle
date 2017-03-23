@@ -1,5 +1,5 @@
 <?php
-namespace VKR\FFMPEGConverterBundle\Tests\functional;
+namespace VKR\FFMPEGConverterBundle\Tests\Functional;
 
 use Monolog\Logger;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -7,7 +7,6 @@ use Symfony\Component\HttpFoundation\File\File;
 use VKR\CustomLoggerBundle\Services\CustomLogger;
 use VKR\FFMPEGConverterBundle\Decorators\ShellDecorator;
 use VKR\FFMPEGConverterBundle\Services\Converter;
-use VKR\SettingsBundle\Services\SettingsRetriever;
 
 class FFMPEGFunctionalTest extends WebTestCase
 {
@@ -16,35 +15,23 @@ class FFMPEGFunctionalTest extends WebTestCase
     /**
      * @var Converter
      */
-    protected $converter;
+    private $converter;
 
     /**
      * @var string
      */
-    protected $loggedOutput;
-
-    /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
-     */
-    protected $customLogger;
-
-    /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
-     */
-    protected $logger;
+    private $loggedOutput;
 
     public function setUp()
     {
-        $this->mockLogger();
-        $this->mockCustomLogger();
+        $customLogger = $this->mockCustomLogger();
         $client = static::createClient();
         $container = $client->getContainer();
-        $entityManager = $container->get('doctrine.orm.entity_manager');
         $shellDecorator = new ShellDecorator();
         $converterParams = $container->getParameter('vkr_ffmpeg_converter');
         $ffmpegPath = $container->getParameter('ffmpeg_path');
         $this->converter = new Converter(
-            $this->customLogger, $shellDecorator, $ffmpegPath, $converterParams
+            $customLogger, $shellDecorator, $ffmpegPath, $converterParams
         );
     }
 
@@ -103,31 +90,23 @@ class FFMPEGFunctionalTest extends WebTestCase
         }
     }
 
-    protected function mockLogger()
+    private function mockLogger()
     {
-        $this->logger = $this
-            ->getMockBuilder(Logger::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->logger->expects($this->any())
-            ->method('addInfo')
-            ->will($this->returnCallback([$this, 'loggerAddInfoCallback']));
+        $logger = $this->createMock(Logger::class);
+        $logger->method('addInfo')
+            ->willReturnCallback([$this, 'loggerAddInfoCallback']);
+        return $logger;
     }
 
-    protected function mockCustomLogger()
+    private function mockCustomLogger()
     {
-        $this->customLogger = $this
-            ->getMockBuilder(CustomLogger::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->customLogger->expects($this->any())
-            ->method('setLogger')
-            ->will($this->returnValue($this->logger));
+        $customLogger = $this->createMock(CustomLogger::class);
+        $customLogger->method('setLogger')->willReturn($this->mockLogger());
+        return $customLogger;
     }
 
     public function loggerAddInfoCallback($message)
     {
         $this->loggedOutput = $message;
     }
-
 }

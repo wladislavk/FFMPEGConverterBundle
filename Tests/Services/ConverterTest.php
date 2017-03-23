@@ -2,22 +2,22 @@
 namespace VKR\FFMPEGConverterBundle\Tests\Services;
 
 use Monolog\Logger;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\File;
 use VKR\CustomLoggerBundle\Services\CustomLogger;
 use VKR\FFMPEGConverterBundle\Decorators\ShellDecorator;
 use VKR\FFMPEGConverterBundle\Services\Converter;
-use VKR\SettingsBundle\Services\SettingsRetriever;
 
-class ConverterTest extends \PHPUnit_Framework_TestCase
+class ConverterTest extends TestCase
 {
     const SOURCE_FILE = __DIR__ . '/../../TestHelpers/static/source/test.csv';
     const DESTINATION_DIR = __DIR__ . '/../../TestHelpers/static/destination/';
 
     const FFMPEG_PATH = '/usr/bin/ffmpeg';
 
-    protected $converterParams = [
+    private $converterParams = [
         'video' => [
             'extension' => 'txt',
             'input' => 'video_source_params',
@@ -35,47 +35,33 @@ class ConverterTest extends \PHPUnit_Framework_TestCase
         ],
     ];
 
-    /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
-     */
-    protected $customLogger;
-
-    /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
-     */
-    protected $logger;
-
-    /**
-     * @var \PHPUnit_Framework_MockObject_MockObject
-     */
-    protected $shellDecorator;
+    private $customLogger;
 
     /**
      * @var string
      */
-    protected $loggedOutput;
+    private $loggedOutput;
 
     /**
      * @var array
      */
-    protected $fileParams;
+    private $fileParams;
 
     public function setUp()
     {
-        $this->mockLogger();
-        $this->mockCustomLogger();
+        $this->customLogger = $this->mockCustomLogger();
     }
 
     public function testVideoFormat()
     {
-        $this->mockShellDecorator(true);
+        $shellDecorator = $this->mockShellDecorator(true);
         $this->fileParams = [
             'source' => self::SOURCE_FILE,
             'mime_type' => 'video/mp4',
         ];
         $file = $this->mockFile();
         $converter = new Converter(
-            $this->customLogger, $this->shellDecorator, self::FFMPEG_PATH, $this->converterParams
+            $this->customLogger, $shellDecorator, self::FFMPEG_PATH, $this->converterParams
         );
         $converter->convertFile($file, self::DESTINATION_DIR, 'some_log_file');
         $expectedCommand =
@@ -87,14 +73,14 @@ class ConverterTest extends \PHPUnit_Framework_TestCase
 
     public function testImageFormatWithLength()
     {
-        $this->mockShellDecorator(true);
+        $shellDecorator = $this->mockShellDecorator(true);
         $this->fileParams = [
             'source' => self::SOURCE_FILE,
             'mime_type' => 'image/jpg',
         ];
         $file = $this->mockFile();
         $converter = new Converter(
-            $this->customLogger, $this->shellDecorator, self::FFMPEG_PATH, $this->converterParams
+            $this->customLogger, $shellDecorator, self::FFMPEG_PATH, $this->converterParams
         );
         $converter->convertFile($file, self::DESTINATION_DIR, 'some_log_file', 30);
         $expectedCommand =
@@ -106,7 +92,7 @@ class ConverterTest extends \PHPUnit_Framework_TestCase
 
     public function testNonMultimediaType()
     {
-        $this->mockShellDecorator(true);
+        $shellDecorator = $this->mockShellDecorator(true);
         $this->fileParams = [
             'source' => self::SOURCE_FILE,
             'mime_type' => 'text/plain',
@@ -114,115 +100,106 @@ class ConverterTest extends \PHPUnit_Framework_TestCase
         $file = $this->mockFile();
         $message = 'The file is not a multimedia file';
         $converter = new Converter(
-            $this->customLogger, $this->shellDecorator, self::FFMPEG_PATH, $this->converterParams
+            $this->customLogger, $shellDecorator, self::FFMPEG_PATH, $this->converterParams
         );
-        $this->setExpectedException(FileException::class, $message);
+        $this->expectException(FileException::class);
+        $this->expectExceptionMessage($message);
         $converter->convertFile($file, self::DESTINATION_DIR, 'some_log_file', 30);
     }
 
     public function testConfigurationWithoutType()
     {
-        $this->mockShellDecorator(true);
+        $shellDecorator = $this->mockShellDecorator(true);
         $this->fileParams = [
             'source' => self::SOURCE_FILE,
             'mime_type' => 'video/mp4',
         ];
         $file = $this->mockFile();
         $message = "Configuration for type video is undefined or malformed";
-        $this->setExpectedException(InvalidConfigurationException::class, $message);
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage($message);
         unset($this->converterParams['video']);
         $converter = new Converter(
-            $this->customLogger, $this->shellDecorator, self::FFMPEG_PATH, $this->converterParams
+            $this->customLogger, $shellDecorator, self::FFMPEG_PATH, $this->converterParams
         );
         $converter->convertFile($file, self::DESTINATION_DIR, 'some_log_file', 30);
     }
 
     public function testConfigurationWithoutExtension()
     {
-        $this->mockShellDecorator(true);
+        $shellDecorator = $this->mockShellDecorator(true);
         $this->fileParams = [
             'source' => self::SOURCE_FILE,
             'mime_type' => 'video/mp4',
         ];
         $file = $this->mockFile();
         $message = "Configuration for type video is undefined or malformed";
-        $this->setExpectedException(InvalidConfigurationException::class, $message);
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage($message);
         unset($this->converterParams['video']['extension']);
         $converter = new Converter(
-            $this->customLogger, $this->shellDecorator, self::FFMPEG_PATH, $this->converterParams
+            $this->customLogger, $shellDecorator, self::FFMPEG_PATH, $this->converterParams
         );
         $converter->convertFile($file, self::DESTINATION_DIR, 'some_log_file', 30);
     }
 
     public function testBadReturnCode()
     {
-        $this->mockShellDecorator(false);
+        $shellDecorator = $this->mockShellDecorator(false);
         $this->fileParams = [
             'source' => self::SOURCE_FILE,
             'mime_type' => 'video/mp4',
         ];
         $file = $this->mockFile();
         $converter = new Converter(
-            $this->customLogger, $this->shellDecorator, self::FFMPEG_PATH, $this->converterParams
+            $this->customLogger, $shellDecorator, self::FFMPEG_PATH, $this->converterParams
         );
-        $this->setExpectedException(\RuntimeException::class, 'FFMPEG error: All is bad');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('FFMPEG error: All is bad');
         $converter->convertFile($file, self::DESTINATION_DIR, 'some_log_file');
     }
 
-    protected function mockShellDecorator($isSuccessful)
+    private function mockShellDecorator($isSuccessful)
     {
-        $this->shellDecorator = $this
-            ->getMockBuilder(ShellDecorator::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        $shellDecorator = $this->createMock(ShellDecorator::class);
         if ($isSuccessful) {
-            $this->shellDecorator->expects($this->any())
-                ->method('exec')
-                ->will($this->returnCallback([$this, 'execMockSuccessfulCallback']));
-            return;
+            $shellDecorator->method('exec')
+                ->willReturnCallback([$this, 'execMockSuccessfulCallback']);
+            return $shellDecorator;
         }
-        $this->shellDecorator->expects($this->any())
-            ->method('exec')
-            ->will($this->returnCallback([$this, 'execMockFailedCallback']));
+        $shellDecorator->method('exec')
+            ->willReturnCallback([$this, 'execMockFailedCallback']);
+        return $shellDecorator;
     }
 
-    protected function mockLogger()
+    private function mockLogger()
     {
-        $this->logger = $this
+        $logger = $this
             ->getMockBuilder(Logger::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $this->logger->expects($this->any())
+        $logger->expects($this->any())
             ->method('addInfo')
             ->will($this->returnCallback([$this, 'loggerAddInfoCallback']));
+        return $logger;
     }
 
-    protected function mockCustomLogger()
+    private function mockCustomLogger()
     {
-        $this->customLogger = $this
-            ->getMockBuilder(CustomLogger::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->customLogger->expects($this->any())
-            ->method('setLogger')
-            ->will($this->returnValue($this->logger));
+        $customLogger = $this->createMock(CustomLogger::class);
+        $customLogger->method('setLogger')->willReturn($this->mockLogger());
+        return $customLogger;
     }
 
-    protected function mockFile()
+    private function mockFile()
     {
-        $file = $this
-            ->getMockBuilder(File::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $file->expects($this->any())
-            ->method('getFilename')
-            ->will($this->returnCallback([$this, 'fileGetNameCallback']));
-        $file->expects($this->any())
-            ->method('getRealPath')
-            ->will($this->returnCallback([$this, 'fileGetRealPathCallback']));
-        $file->expects($this->any())
-            ->method('getMimeType')
-            ->will($this->returnCallback([$this, 'fileGetMimeTypeCallback']));
+        $file = $this->createMock(File::class);
+        $file->method('getFilename')
+            ->willReturnCallback([$this, 'fileGetNameCallback']);
+        $file->method('getRealPath')
+            ->willReturnCallback([$this, 'fileGetRealPathCallback']);
+        $file->method('getMimeType')
+            ->willReturnCallback([$this, 'fileGetMimeTypeCallback']);
         return $file;
     }
 

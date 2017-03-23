@@ -14,22 +14,22 @@ class Converter
     /**
      * @var string
      */
-    protected $ffmpegPath;
+    private $ffmpegPath;
 
     /**
      * @var CustomLogger
      */
-    protected $customLogger;
+    private $customLogger;
 
     /**
      * @var ShellDecorator
      */
-    protected $shellDecorator;
+    private $shellDecorator;
 
     /**
      * @var array
      */
-    protected $converterParams;
+    private $converterParams;
 
     public function __construct(
         CustomLogger $customLogger,
@@ -87,7 +87,7 @@ class Converter
      * @return string
      * @throws InvalidConfigurationException
      */
-    protected function changeExtension($filename, $baseType)
+    private function changeExtension($filename, $baseType)
     {
         if (!isset($this->converterParams[$baseType]['extension'])) {
             throw new InvalidConfigurationException(
@@ -103,7 +103,7 @@ class Converter
      * @param File $file
      * @throws FileException|FileNotFoundException
      */
-    protected function getBaseFileType(File $file)
+    private function getBaseFileType(File $file)
     {
         $fileType = $file->getMimeType();
         $baseType = explode('/', $fileType)[0];
@@ -113,7 +113,7 @@ class Converter
     /**
      * @return array
      */
-    protected function getVideoParams()
+    private function getVideoParams()
     {
         $params = $this->converterParams['video'];
         return $params;
@@ -122,7 +122,7 @@ class Converter
     /**
      * @return array
      */
-    protected function getAudioParams()
+    private function getAudioParams()
     {
         $params = $this->converterParams['audio'];
         return $params;
@@ -132,7 +132,7 @@ class Converter
      * @param int $length
      * @return array
      */
-    protected function getImageParams($length)
+    private function getImageParams($length)
     {
         $params = $this->converterParams['image'];
         if ($length) {
@@ -148,7 +148,7 @@ class Converter
      * @param array $params
      * @throws \RuntimeException
      */
-    protected function callFFMPEG($source, $destination, Logger $logger, array $params=[])
+    private function callFFMPEG($source, $destination, Logger $logger, array $params=[])
     {
         $command = $this->ffmpegPath . ' ';
         $command .= $params['input'] . ' ';
