@@ -28,7 +28,7 @@ class FFMPEGFunctionalTest extends WebTestCase
         $client = static::createClient();
         $container = $client->getContainer();
         $shellDecorator = new ShellDecorator();
-        $converterParams = $container->getParameter('vkr_ffmpeg_converter');
+        $converterParams = $container->getParameter('vkr_ffmpeg_converter.params');
         $ffmpegPath = $container->getParameter('ffmpeg_path');
         $this->converter = new Converter(
             $customLogger, $shellDecorator, $ffmpegPath, $converterParams
