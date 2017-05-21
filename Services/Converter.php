@@ -151,6 +151,7 @@ class Converter
     private function callFFMPEG($source, $destination, Logger $logger, array $params=[])
     {
         $command = $this->ffmpegPath . ' ';
+        $command .= '-loglevel quiet ';
         $command .= $params['input'] . ' ';
         $command .= "-i $source ";
         $command .= $params['output'] . ' ';
